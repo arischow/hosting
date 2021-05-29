@@ -1,0 +1,34 @@
+accessLog: {}
+
+log:
+  level: INFO
+
+api:
+  insecure: true
+
+entryPoints:
+  web:
+    address: ":80"
+
+  websecure:
+    address: ":443"
+
+certificatesResolvers:
+  cloudflareresolver:
+    acme:
+      storage: /etc/traefik/secrets/acme.json
+      dnsChallenge:
+        provider: cloudflare
+        delayBeforeCheck: 0
+
+providers:
+  file:
+    directory: /etc/traefik
+    watch: true
+  docker:
+    exposedByDefault: false
+
+tls:
+  options:
+    default:
+      minVersion: VersionTLS13

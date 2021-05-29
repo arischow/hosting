@@ -1,0 +1,78 @@
+version: '3'
+
+services:
+  traefik:
+    restart: always
+    image: traefik:v2.4
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/traefik:/etc/traefik
+    env_file:
+      - .env.prod
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.dashboard.rule=Host(`traefik.arischow.org`)
+      - traefik.http.routers.dashboard.service=api@internal
+      - traefik.http.routers.dashboard.middlewares=basic-auth@file
+      - traefik.http.routers.dashboard.entrypoints=websecure
+      - traefik.http.routers.dashboard.tls=true
+      - traefik.http.routers.dashboard.tls.certresolver=cloudflareresolver
+      - traefik.http.routers.dashboard.tls.domains[0].main=arischow.org
+      - traefik.http.routers.dashboard.tls.domains[0].sans=*.arischow.org
+
+  bitwarden:
+    restart: always
+    image: bitwardenrs/server:1.20.0-alpine
+    user: 1000:1000
+    expose:
+      - "80"
+    volumes:
+      - /opt/bitwarden/bw-data/:/data/
+    environment:
+      - SIGNUPS_ALLOWED=false
+      - SHOW_PASSWORD_HINT=false
+      - LOG_FILE=/data/bitwarden.log
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.bitwarden.rule=Host(`bitwarden.arischow.org`)
+      - traefik.http.routers.bitwarden.entrypoints=websecure
+      - traefik.http.routers.bitwarden.tls=true
+      - traefik.http.routers.bitwarden.tls.certresolver=cloudflareresolver
+      - traefik.http.routers.bitwarden.tls.domains[0].main=arischow.org
+      - traefik.http.routers.bitwarden.tls.domains[0].sans=*.arischow.org
+
+  adguardhome:
+    restart: always
+    image: adguard/adguardhome:v0.105.2
+    expose:
+      - "53/tcp"
+      - "53/udp"
+      - "3000"
+      - "853"
+      - "443"
+    volumes:
+      - /opt/adguardhome/work:/opt/adguardhome/work
+      - /opt/adguardhome/conf:/opt/adguardhome/conf
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.adguard.rule=Host(`thelaughingman.arischow.org`)
+      - traefik.http.routers.adguard.entrypoints=websecure
+      - traefik.http.routers.adguard.tls=true
+      - traefik.http.routers.adguard.tls.certresolver=cloudflareresolver
+      - traefik.http.routers.adguard.tls.domains[0].main=arischow.org
+      - traefik.http.routers.adguard.tls.domains[0].sans=*.arischow.org
+      - traefik.http.routers.adguard.service=adguard-service
+      - traefik.http.routers.adguard.middlewares=basic-auth@file
+      - traefik.http.services.adguard-service.loadbalancer.server.port=3000
+      - traefik.http.routers.adguard-doh.rule=Host(`thelaughingman.arischow.org`) && Path(`/dns-query`)
+      - traefik.http.routers.adguard-doh.entrypoints=websecure
+      - traefik.http.routers.adguard-doh.tls=true
+      - traefik.http.routers.adguard-doh.service=adguard-doh-service
+      - traefik.http.routers.adguard-doh.middlewares=test-ipwhitelist@file
+      - traefik.http.services.adguard-doh-service.loadbalancer.server.port=443
+      - traefik.http.services.adguard-doh-service.loadbalancer.server.scheme=https
+      - traefik.http.services.adguard-doh-service.loadbalancer.serverstransport=adguardhome-doh-transport@file
