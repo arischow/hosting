@@ -76,3 +76,37 @@ services:
       - traefik.http.services.adguard-doh-service.loadbalancer.server.port=443
       - traefik.http.services.adguard-doh-service.loadbalancer.server.scheme=https
       - traefik.http.services.adguard-doh-service.loadbalancer.serverstransport=adguardhome-doh-transport@file
+
+  ghost:
+    restart: always
+    image: ghost:4.8.3-alpine
+    user: 1000:1000
+    expose:
+      - "2368"
+    env_file:
+      - .env.prod.ghost
+    volumes:
+      - /var/lib/ghost/content:/var/lib/ghost/content
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.ghost.rule=Host(`arischow.org`)
+      - traefik.http.routers.ghost.entrypoints=websecure
+      - traefik.http.routers.ghost.tls=true
+      - traefik.http.routers.ghost.tls.certresolver=cloudflareresolver
+      - traefik.http.routers.ghost.tls.domains[0].main=arischow.org
+      - traefik.http.routers.ghost.tls.domains[0].sans=*.arischow.org
+      - traefik.http.routers.ghost.service=ghost-service
+      - traefik.http.services.ghost-service.loadbalancer.server.port=2368
+    depends_on:
+      - mysql
+
+  mysql:
+    restart: always
+    image: mysql:8.0.25
+    hostname: db
+    command: --default-authentication-plugin=mysql_native_password
+    env_file:
+      - .env.prod.mysql
+    user: 1000:1000
+    volumes:
+      - /var/lib/mysql:/var/lib/mysql
