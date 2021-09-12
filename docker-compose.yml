@@ -26,7 +26,7 @@ services:
 
   bitwarden:
     restart: always
-    image: bitwardenrs/server:1.20.0-alpine
+    image: vaultwarden/server:1.22.2-alpine
     user: 1000:1000
     expose:
       - "80"
@@ -47,7 +47,7 @@ services:
 
   adguardhome:
     restart: always
-    image: adguard/adguardhome:v0.105.2
+    image: adguard/adguardhome:v0.106.3
     expose:
       - "53/tcp"
       - "53/udp"
