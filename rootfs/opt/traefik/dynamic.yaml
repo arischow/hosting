@@ -6,7 +6,7 @@ http:
     test-ipwhitelist:
       ipWhiteList:
         sourceRange:
-          - "222.67.5.147/32"
+          - "222.67.0.0/16"
     basic-auth:
       basicAuth:
         usersFile: "/etc/traefik/secrets/credentials"
