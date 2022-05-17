@@ -77,30 +77,47 @@ services:
       - traefik.http.services.adguard-doh-service.loadbalancer.server.scheme=https
       - traefik.http.services.adguard-doh-service.loadbalancer.serverstransport=adguardhome-doh-transport@file
 
-  subconverter:
-    restart: always
-    image: arischow/subconverter:master
-    expose:
-      - "25500"
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.subconverter.rule=Host(`api.arisc.how`) && Path(`/sub`)
-      - traefik.http.routers.subconverter.entrypoints=websecure
-      - traefik.http.routers.subconverter.tls=true
-      - traefik.http.routers.subconverter.tls.certresolver=cloudflareresolver
-      - traefik.http.routers.subconverter.tls.domains[0].main=arisc.how
-      - traefik.http.routers.subconverter.tls.domains[0].sans=*.arisc.how
+#  subconverter:
+#    restart: always
+#    image: arischow/subconverter:master
+#    expose:
+#      - "25500"
+#    labels:
+#      - traefik.enable=true
+#      - traefik.http.routers.subconverter.rule=Host(`api.arisc.how`) && Path(`/sub`)
+#      - traefik.http.routers.subconverter.entrypoints=websecure
+#      - traefik.http.routers.subconverter.tls=true
+#      - traefik.http.routers.subconverter.tls.certresolver=cloudflareresolver
+#      - traefik.http.routers.subconverter.tls.domains[0].main=arisc.how
+#      - traefik.http.routers.subconverter.tls.domains[0].sans=*.arisc.how
+#
+#  subweb:
+#    restart: always
+#    image: arischow/subconverter-web:master
+#    expose:
+#      - "80"
+#    labels:
+#      - traefik.enable=true
+#      - traefik.http.routers.subweb.rule=Host(`sub.arisc.how`)
+#      - traefik.http.routers.subweb.entrypoints=websecure
+#      - traefik.http.routers.subweb.tls=true
+#      - traefik.http.routers.subweb.tls.certresolver=cloudflareresolver
+#      - traefik.http.routers.subweb.tls.domains[0].main=arisc.how
+#      - traefik.http.routers.subweb.tls.domains[0].sans=*.arisc.how
 
-  subweb:
+  nginx:
     restart: always
-    image: arischow/subconverter-web:master
+    image: nginx:1.21.6-alpine
     expose:
       - "80"
+    volumes:
+      - ~/data/git/arisc.how/dist:/usr/share/nginx/html
+      - ~/data/git/arisc.how/nginx:/etc/nginx/conf.d
     labels:
       - traefik.enable=true
-      - traefik.http.routers.subweb.rule=Host(`sub.arisc.how`)
-      - traefik.http.routers.subweb.entrypoints=websecure
-      - traefik.http.routers.subweb.tls=true
-      - traefik.http.routers.subweb.tls.certresolver=cloudflareresolver
-      - traefik.http.routers.subweb.tls.domains[0].main=arisc.how
-      - traefik.http.routers.subweb.tls.domains[0].sans=*.arisc.how
+      - traefik.http.routers.nginx.rule=Host(`arisc.how`)
+      - traefik.http.routers.nginx.entrypoints=websecure
+      - traefik.http.routers.nginx.tls=true
+      - traefik.http.routers.nginx.tls.certresolver=cloudflareresolver
+      - traefik.http.routers.nginx.tls.domains[0].main=arisc.how
+      - traefik.http.routers.nginx.tls.domains[0].sans=*.arisc.how
