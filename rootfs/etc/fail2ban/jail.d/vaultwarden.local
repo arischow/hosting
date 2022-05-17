@@ -3,7 +3,7 @@ enabled = true
 port = 80,443,8081
 filter = vaultwarden
 action = iptables-allports[name=vaultwarden, chain=DOCKER-USER]
-logpath = /opt/bitwarden/bw-data/bitwarden.log
+logpath = /home/arischow/data/bitwarden/bw-data/bitwarden.log
 maxretry = 3
 bantime = 14400
 findtime = 14400
