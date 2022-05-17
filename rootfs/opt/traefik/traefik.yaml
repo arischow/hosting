@@ -36,7 +36,7 @@ providers:
 tls:
   options:
     default:
-      minVersion: VersionTLS13
+      minVersion: VersionTLS12
 
 forwardedHeaders:
   trustedIPs:
