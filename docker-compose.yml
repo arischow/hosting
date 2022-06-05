@@ -3,7 +3,7 @@ version: '3'
 services:
   traefik:
     restart: always
-    image: traefik:v2.4
+    image: traefik:v2.7
     ports:
       - "80:80"
       - "443:443"
@@ -27,7 +27,7 @@ services:
 
   bitwarden:
     restart: always
-    image: vaultwarden/server:1.22.2-alpine
+    image: vaultwarden/server:1.25.0-alpine
     user: 1002:1002
     expose:
       - "80"
@@ -48,7 +48,7 @@ services:
 
   adguardhome:
     restart: always
-    image: adguard/adguardhome:v0.106.3
+    image: adguard/adguardhome:v0.107.6
     expose:
       - "53/tcp"
       - "53/udp"
