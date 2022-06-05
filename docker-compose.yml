@@ -58,6 +58,7 @@ services:
     volumes:
       - ~/data/adguardhome/work:/opt/adguardhome/work
       - ~/data/adguardhome/conf:/opt/adguardhome/conf
+      - ~/data/traefik/secrets/generated:/mnt/certs
     labels:
       - traefik.enable=true
       - traefik.http.routers.adguard.rule=Host(`thelaughingman.arischow.org`)
