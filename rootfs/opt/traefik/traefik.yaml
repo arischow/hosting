@@ -21,7 +21,7 @@ entryPoints:
 certificatesResolvers:
   cloudflareresolver:
     acme:
-      storage: /etc/traefik/secrets/acme.json
+      storage: /data/traefik/secrets/acme.json
       dnsChallenge:
         provider: cloudflare
         delayBeforeCheck: 0

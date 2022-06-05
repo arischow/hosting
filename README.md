@@ -10,8 +10,4 @@
 
 ## Should backup before destorying the server
 - `.env.prod`
-- `/opt/bitwarden`
-- `/opt/adguardhome`
-- `/opt/traefik/secrets`
-- `/var/lib/ghost/content`
-- `/var/lib/mysql`
+- `~/data`
