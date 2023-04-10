@@ -3,7 +3,7 @@ version: '3'
 services:
   traefik:
     restart: always
-    image: traefik:v2.7
+    image: traefik:v2.9.6
     ports:
       - "80:80"
       - "443:443"
@@ -12,8 +12,9 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./rootfs/opt/traefik:/etc/traefik
       - ~/data/traefik/secrets:/data/traefik/secrets
-    env_file:
-      - .env.prod
+    environment:
+      CLOUDFLARE_EMAIL: ${CLOUDFLARE_EMAIL}
+      CLOUDFLARE_API_KEY: ${CLOUDFLARE_API_KEY}
     labels:
       - traefik.enable=true
       - traefik.http.routers.dashboard.rule=Host(`traefik.arischow.org`)
@@ -79,34 +80,6 @@ services:
       - traefik.http.services.adguard-doh-service.loadbalancer.server.scheme=https
       - traefik.http.services.adguard-doh-service.loadbalancer.serverstransport=adguardhome-doh-transport@file
 
-#  subconverter:
-#    restart: always
-#    image: arischow/subconverter:master
-#    expose:
-#      - "25500"
-#    labels:
-#      - traefik.enable=true
-#      - traefik.http.routers.subconverter.rule=Host(`api.arisc.how`) && Path(`/sub`)
-#      - traefik.http.routers.subconverter.entrypoints=websecure
-#      - traefik.http.routers.subconverter.tls=true
-#      - traefik.http.routers.subconverter.tls.certresolver=cloudflareresolver
-#      - traefik.http.routers.subconverter.tls.domains[0].main=arisc.how
-#      - traefik.http.routers.subconverter.tls.domains[0].sans=*.arisc.how
-#
-#  subweb:
-#    restart: always
-#    image: arischow/subconverter-web:master
-#    expose:
-#      - "80"
-#    labels:
-#      - traefik.enable=true
-#      - traefik.http.routers.subweb.rule=Host(`sub.arisc.how`)
-#      - traefik.http.routers.subweb.entrypoints=websecure
-#      - traefik.http.routers.subweb.tls=true
-#      - traefik.http.routers.subweb.tls.certresolver=cloudflareresolver
-#      - traefik.http.routers.subweb.tls.domains[0].main=arisc.how
-#      - traefik.http.routers.subweb.tls.domains[0].sans=*.arisc.how
-
   nginx:
     restart: always
     image: nginx:1.21.6-alpine
@@ -124,3 +97,89 @@ services:
       - traefik.http.routers.nginx.tls.certresolver=cloudflareresolver
       - traefik.http.routers.nginx.tls.domains[0].main=arisc.how
       - traefik.http.routers.nginx.tls.domains[0].sans=*.arisc.how
+
+  teslamate:
+    image: teslamate/teslamate:latest
+    restart: always
+    volumes:
+      - ~/data/teslamate/import:/opt/app/import
+    environment:
+      - ENCRYPTION_KEY=${TM_ENCRYPTION_KEY}
+      - DATABASE_USER=${TM_DB_USER}
+      - DATABASE_PASS=${TM_DB_PASS}
+      - DATABASE_NAME=${TM_DB_NAME}
+      - DATABASE_HOST=database
+      - MQTT_HOST=mosquitto
+      - VIRTUAL_HOST=${FQDN_TM}
+      - CHECK_ORIGIN=true
+      - TZ=${TM_TZ}
+    expose:
+      - "4000"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.teslamate.middlewares=basic-auth@file
+      - traefik.http.routers.teslamate-ws.rule=Host(`${FQDN_TM}`) && Path(`/live/websocket`)
+      - traefik.http.routers.teslamate-ws.entrypoints=websecure
+      - traefik.http.routers.teslamate-ws.tls=true
+      - traefik.http.routers.teslamate.rule=Host(`${FQDN_TM}`)
+      - traefik.http.routers.teslamate.entrypoints=websecure
+      - traefik.http.routers.teslamate.tls.certresolver=cloudflareresolver
+      - traefik.http.routers.teslamate.tls.domains[0].main=arisc.how
+      - traefik.http.routers.teslamate.tls.domains[0].sans=*.arisc.how
+    cap_drop:
+      - all
+
+  database:
+    image: postgres:14
+    restart: always
+    environment:
+      - POSTGRES_USER=${TM_DB_USER}
+      - POSTGRES_PASSWORD=${TM_DB_PASS}
+      - POSTGRES_DB=${TM_DB_NAME}
+    volumes:
+      - teslamate-db:/var/lib/postgresql/data
+
+  grafana:
+    image: teslamate/grafana:latest
+    restart: always
+    environment:
+      - DATABASE_USER=${TM_DB_USER}
+      - DATABASE_PASS=${TM_DB_PASS}
+      - DATABASE_NAME=${TM_DB_NAME}
+      - DATABASE_HOST=database
+      - GRAFANA_PASSWD=${GRAFANA_PW}
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PW}
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_SERVER_DOMAIN=${FQDN_TM}
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s/grafana
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+    volumes:
+      - teslamate-grafana-data:/var/lib/grafana
+    expose:
+      - "3000"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.grafana.rule=Host(`${FQDN_TM}`) && (Path(`/grafana`) || PathPrefix(`/grafana/`))
+      - traefik.http.routers.grafana.entrypoints=websecure
+      - traefik.http.routers.grafana.tls=true
+      - traefik.http.routers.grafana.tls.certresolver=cloudflareresolver
+      - traefik.http.routers.grafana.tls.domains[0].main=arisc.how
+      - traefik.http.routers.grafana.tls.domains[0].sans=*.arisc.how
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: always
+    command: mosquitto -c /mosquitto-no-auth.conf
+    ports:
+      - 127.0.0.1:1883:1883
+    volumes:
+      - mosquitto-conf:/mosquitto/config
+      - mosquitto-data:/mosquitto/data
+
+
+volumes:
+  teslamate-db:
+  teslamate-grafana-data:
+  mosquitto-conf:
+  mosquitto-data:
