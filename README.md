@@ -7,6 +7,8 @@
 - AdGuard Home
 - Traefik
 - VaultWarden
+- subconverter
+- teslamate
 
 ## Should backup before destorying the server
 - `.env.prod`

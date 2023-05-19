@@ -34,6 +34,8 @@ services:
       - "80"
     volumes:
       - ~/data/bitwarden/bw-data/:/data/
+    env_file:
+      - .env.bitwarden
     environment:
       - SIGNUPS_ALLOWED=false
       - SHOW_PASSWORD_HINT=false
@@ -79,6 +81,20 @@ services:
       - traefik.http.services.adguard-doh-service.loadbalancer.server.port=443
       - traefik.http.services.adguard-doh-service.loadbalancer.server.scheme=https
       - traefik.http.services.adguard-doh-service.loadbalancer.serverstransport=adguardhome-doh-transport@file
+
+  subconverter:
+    restart: always
+    image: tindy2013/subconverter:latest
+    expose:
+      - "25500"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.subconverter.rule=Host(`subconverter.arisc.how`) && Path(`/sub`)
+      - traefik.http.routers.subconverter.entrypoints=websecure
+      - traefik.http.routers.subconverter.tls=true
+      - traefik.http.routers.subconverter.tls.certresolver=cloudflareresolver
+      - traefik.http.routers.subconverter.tls.domains[0].main=arisc.how
+      - traefik.http.routers.subconverter.tls.domains[0].sans=*.arisc.how
 
   nginx:
     restart: always
