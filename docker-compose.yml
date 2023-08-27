@@ -194,9 +194,48 @@ services:
       - mosquitto-conf:/mosquitto/config
       - mosquitto-data:/mosquitto/data
 
+  synapse-db:
+    image: postgres:15.3-bullseye
+    restart: always
+    environment:
+      - POSTGRES_USER=${SYNAPSE_DB_USER}
+      - POSTGRES_PASSWORD=${SYNAPSE_DB_PASS}
+      - POSTGRES_DB=${SYNAPSE_DB_NAME}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF8 --locale=C
+    volumes:
+      - synapse-db:/var/lib/postgresql/data
+
+  synapse:
+    image: matrixdotorg/synapse:v1.90.0
+    restart: always
+    volumes:
+      - "synapse-data:/data"
+    expose:
+      - "8008"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.synapse.rule=Host(`matrix.arisc.how`)
+      - traefik.http.routers.synapse.entrypoints=websecure
+      - traefik.http.routers.synapse.tls=true
+      - traefik.http.routers.synapse.tls.certresolver=cloudflareresolver
+      - traefik.http.routers.synapse.tls.domains[0].main=arisc.how
+      - traefik.http.routers.synapse.tls.domains[0].sans=*.arisc.how
+
+  heisenbridge:
+    image: hif1/heisenbridge:1.14.5
+    restart: always
+    volumes:
+      - "synapse-data:/data"
+    command:
+      - http://synapse:8008
+      - -c
+      - /data/heisenbridge.yaml
+
 
 volumes:
   teslamate-db:
   teslamate-grafana-data:
   mosquitto-conf:
   mosquitto-data:
+  synapse-data:
+  synapse-db:
