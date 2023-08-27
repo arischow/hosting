@@ -111,6 +111,24 @@ services:
       - traefik.http.routers.subweb.tls.domains[0].main=arisc.how
       - traefik.http.routers.subweb.tls.domains[0].sans=*.arisc.how
 
+  sub-relay:
+    restart: always
+    build:
+      context: ./services/sub-relay
+      dockerfile: Dockerfile
+    expose:
+      - "8080"
+    environment:
+      - AUTH_TOKEN=${SUB_RELAY_AUTH_TOKEN}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.subrelay.rule=Host(`sub-relay.arisc.how`)
+      - traefik.http.routers.subrelay.entrypoints=websecure
+      - traefik.http.routers.subrelay.tls=true
+      - traefik.http.routers.subrelay.tls.certresolver=cloudflareresolver
+      - traefik.http.routers.subrelay.tls.domains[0].main=arisc.how
+      - traefik.http.routers.subrelay.tls.domains[0].sans=*.arisc.how
+
   nginx:
     restart: always
     image: nginx:1.21.6-alpine
