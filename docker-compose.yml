@@ -97,6 +97,20 @@ services:
       - traefik.http.routers.subconverter.tls.domains[0].main=arisc.how
       - traefik.http.routers.subconverter.tls.domains[0].sans=*.arisc.how
 
+  subweb:
+    restart: always
+    image: careywong/subweb:latest
+    expose:
+      - "80"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.subweb.rule=Host(`subconverter.arisc.how`)
+      - traefik.http.routers.subweb.entrypoints=websecure
+      - traefik.http.routers.subweb.tls=true
+      - traefik.http.routers.subweb.tls.certresolver=cloudflareresolver
+      - traefik.http.routers.subweb.tls.domains[0].main=arisc.how
+      - traefik.http.routers.subweb.tls.domains[0].sans=*.arisc.how
+
   nginx:
     restart: always
     image: nginx:1.21.6-alpine
