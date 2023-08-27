@@ -120,6 +120,8 @@ services:
       - "8080"
     environment:
       - AUTH_TOKEN=${SUB_RELAY_AUTH_TOKEN}
+    volumes:
+      - ~/data/sub-relay:/app/data
     labels:
       - traefik.enable=true
       - traefik.http.routers.subrelay.rule=Host(`sub-relay.arisc.how`)
