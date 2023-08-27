@@ -17,7 +17,7 @@ def retrieve(token):
         return "No access", 400
 
 
-@app.route("/<token>", methods=["POST"])
+@app.route("/update/<token>", methods=["POST"])
 def save(token):
     if request.headers.get("Authorization") != os.getenv("AUTH_TOKEN"):
         return "Unauthorized", 401
