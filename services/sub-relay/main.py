@@ -19,7 +19,7 @@ def retrieve(token):
 
 @app.route("/update/<token>", methods=["POST"])
 def save(token):
-    if request.headers.get("Authorization") != os.getenv("AUTH_TOKEN"):
+    if request.headers.get("Authorization") != f"Bearer {os.getenv('AUTH_TOKEN')}":
         return "Unauthorized", 401
     with open(f"{project_root}/data/{token}", "w") as f:
         f.write(request.data.decode("utf-8"))
